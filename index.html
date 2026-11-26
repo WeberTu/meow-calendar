@@ -52,6 +52,10 @@ body[data-theme="book"] .day{border-radius:4px}
 #times button{font-variant-numeric:tabular-nums;white-space:nowrap;flex-basis:45%}
 #times button.del{outline:2px dashed var(--off);outline-offset:-2px}
 .mini{background:transparent;color:var(--sub);font-size:12px;padding:6px 2px 0}
+#shot{width:100%;background:var(--soft);padding:12px;font-weight:700}
+#shot:disabled{opacity:.6}
+#filled{font-size:12px;color:var(--off);margin:6px 2px 0;text-align:center}
+#filled:empty{display:none}
 #demo{font-size:12px;color:var(--off);margin:8px 2px 0;text-align:center}
 input,select{font:inherit;color:inherit;border:1px solid var(--soft);border-radius:10px;padding:8px;background:var(--card);min-width:0;flex:1}
 ul{list-style:none;margin:0;padding:0}
@@ -84,6 +88,12 @@ footer>div{max-width:416px;margin:0 auto}
   </header>
 
   <p id="demo" class="hide">試用模式：記錄只留在這支裝置，不會寫進行事曆</p>
+
+  <section id="shotBox" class="hide">
+    <button id="shot">📷 上傳截圖，幫我填</button>
+    <input type="file" id="file" accept="image/*" class="hide">
+    <p id="filled"></p>
+  </section>
 
   <section>
     <div class="month">
@@ -320,11 +330,12 @@ function stamp(){ var s = el('div', THEMES[theme].stamp); s.id = 'stamp'; return
 function reset(){
   picked = []; kind = ''; tidying = false; $('note').value = ''; $('from').value = ''; $('to').value = '';
   only('kinds', null);
+  $('filled').textContent = '';
   renderTimes(); refresh();
 }
 
 function failed(err){
-  busy = false; renderSummary();
+  busy = false; renderSummary(); shotIdle();
   sheet([el('h3','沒有成功 😿'), el('p', String(err && err.message || err)), btn('知道了', closeSheet)]);
 }
 function call(name, args, ok){
@@ -339,6 +350,46 @@ function call(name, args, ok){
     .then(function(j){ if(!j.ok) throw new Error(j.error); ok(j.result); })
     .catch(failed);
 }
+// Screenshot -> form. The user still checks the result and presses the save button.
+function shotIdle(){ $('shot').disabled = false; $('shot').textContent = '📷 上傳截圖，幫我填'; }
+function shrink(file, ok){
+  var img = new Image(), url = URL.createObjectURL(file);
+  img.onload = function(){
+    var scale = Math.min(1, 1568 / Math.max(img.width, img.height));
+    var c = document.createElement('canvas');
+    c.width = Math.round(img.width*scale); c.height = Math.round(img.height*scale);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    URL.revokeObjectURL(url);
+    ok({mediaType:'image/jpeg', data:c.toDataURL('image/jpeg', 0.85).split(',')[1]});
+  };
+  img.onerror = function(){ URL.revokeObjectURL(url); failed('這個檔案打不開，請換一張截圖'); };
+  img.src = url;
+}
+function fill(ev){
+  closeSheet();
+  picked = ev.date ? [ev.date] : [];
+  if(ev.date){ var d = parse(ev.date); view = new Date(d.getFullYear(), d.getMonth(), 1); }
+  setTime('from', ev.start); setTime('to', ev.end);
+  kind = KINDS.filter(function(k){ return ev.activity && k.split(' ')[1]===ev.activity; })[0] || '';
+  only('kinds', Array.prototype.filter.call($('kinds').children, function(b){ return b.textContent===kind; })[0] || null);
+  $('note').value = ev.note;
+  var missing = [];
+  if(!ev.date) missing.push('日期');
+  if(!ev.start) missing.push('開始時間');
+  if(!ev.end) missing.push('結束時間');
+  $('filled').textContent = missing.length ? '截圖裡沒看到' + missing.join('、') + '，請自己補上' : '填好了，核對一下再按下面的「記下來」';
+  renderTimes(); renderCal(); renderSummary();
+}
+function readShot(res){
+  shotIdle();
+  var list = res.events;
+  if(!list.length){ $('filled').textContent = '截圖裡沒找到活動，請手動填'; return; }
+  if(list.length===1){ fill(list[0]); return; }
+  sheet([el('h3','找到好幾個，要記哪一個？')].concat(list.map(function(ev){
+    return btn([ev.date ? nice(ev.date) : '日期不明', ev.start, ev.activity || ev.note].join(' '), function(){ fill(ev); });
+  })).concat([btn('都不要', closeSheet)]));
+}
+
 // Hosted page opened without its link: let the user paste it once.
 function askLink(){
   var box = el('input'); box.placeholder = '貼上完整連結'; box.style.width = '100%';
@@ -387,6 +438,14 @@ $('tidy').onclick = function(){ tidying = !tidying; renderTimes(); };
 document.querySelectorAll('.themes button').forEach(function(b){ b.onclick = function(){ setTheme(b.dataset.t); renderSummary(); }; });
 
 if(!BACKEND){ if(HOSTED) askLink(); else $('demo').classList.remove('hide'); }
+else $('shotBox').classList.remove('hide');
+$('shot').onclick = function(){ $('file').click(); };
+$('file').onchange = function(){
+  var file = this.files[0]; this.value = '';
+  if(!file) return;
+  $('shot').disabled = true; $('shot').textContent = '看圖中…大約幾秒'; $('filled').textContent = '';
+  shrink(file, function(image){ call('parseImage', [image], readShot); });
+};
 setTheme(theme); renderTimes(); renderSummary();
 if(BACKEND){
   call('listEvents', [], function(list){ events = list; refresh(); });
