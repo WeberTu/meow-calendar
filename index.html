@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>喵一下行事曆</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="喵一下行事曆">
+<meta name="theme-color" content="#fff6ee">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex, nofollow">
+<link rel="apple-touch-icon" href="icon-1024.png">
+<link rel="icon" href="icon-1024.png">
+<style>
+:root{--bg:#fff6ee;--card:#fff;--ink:#5a4036;--sub:#a08a7e;--main:#f28c6a;--soft:#ffe3d6;--off:#d96a7b;--r:18px}
+body[data-theme="sprout"]{--bg:#f0f8e6;--ink:#3b4a2f;--sub:#7f8f6e;--main:#6faa46;--soft:#dcefc9;--off:#d9774a}
+body[data-theme="book"]{--bg:#efe9de;--card:#fbf8f2;--ink:#3f3a34;--sub:#8c8378;--main:#7d6652;--soft:#e4dacb;--off:#a5543f;--r:6px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 -apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;padding-bottom:130px}
+body[data-theme="book"]{font-family:"Noto Serif TC","Songti TC",PMingLiU,serif}
+main{max-width:440px;margin:0 auto;padding:12px}
+header{display:flex;align-items:center;gap:10px}
+#mascot{width:64px;height:64px;flex:none}
+h1{font-size:20px;margin:0}
+#greet{margin:0;color:var(--sub);font-size:13px}
+.themes{margin-left:auto;display:flex;gap:4px}
+button{font:inherit;color:inherit;border:0;background:var(--card);border-radius:var(--r);cursor:pointer;touch-action:manipulation}
+.themes button{width:34px;height:34px;padding:0;font-size:17px;border:2px solid transparent}
+.themes button.on{border-color:var(--main)}
+section{background:var(--card);border-radius:var(--r);padding:10px;margin-top:10px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+h2{font-size:14px;margin:0 0 8px;color:var(--sub);font-weight:600}
+.month{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.month button{width:44px;height:36px;background:var(--soft)}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center}
+.grid span{font-size:12px;color:var(--sub)}
+.day{height:44px;padding:0;border-radius:12px;background:transparent;position:relative;font-size:15px}
+body[data-theme="book"] .day{border-radius:4px}
+.day.off{background:var(--soft);color:var(--off);font-weight:700}
+.day.today{outline:2px dashed var(--sub);outline-offset:-2px}
+.day.sel{background:var(--main);color:#fff}
+.day:disabled{opacity:.3;cursor:default}
+.day i{position:absolute;right:1px;bottom:0;font-style:normal;font-size:11px}
+#holiday{font-size:12px;color:var(--sub);margin:6px 2px 0;min-height:1em}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{background:var(--soft);padding:10px 12px;min-height:44px;flex:1 0 28%}
+.chips button small{display:block;font-size:11px;opacity:.7}
+.chips button.on{background:var(--main);color:#fff}
+.row{display:flex;gap:8px;align-items:center;margin-top:8px}
+#times:not(:empty){margin-top:8px}
+#times button{font-variant-numeric:tabular-nums;white-space:nowrap;flex-basis:45%}
+#times button.del{outline:2px dashed var(--off);outline-offset:-2px}
+.mini{background:transparent;color:var(--sub);font-size:12px;padding:6px 2px 0}
+#demo{font-size:12px;color:var(--off);margin:8px 2px 0;text-align:center}
+input,select{font:inherit;color:inherit;border:1px solid var(--soft);border-radius:10px;padding:8px;background:var(--card);min-width:0;flex:1}
+ul{list-style:none;margin:0;padding:0}
+li{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:7px 2px;border-bottom:1px dashed var(--soft);font-size:14px}
+li button{background:var(--soft);padding:4px 10px;font-size:12px}
+footer{position:fixed;left:0;right:0;bottom:0;background:var(--bg);padding:8px 12px calc(10px + env(safe-area-inset-bottom));box-shadow:0 -3px 10px rgba(0,0,0,.08)}
+footer>div{max-width:416px;margin:0 auto}
+#summary{font-size:13px;color:var(--sub);text-align:center;margin-bottom:6px;min-height:1.4em}
+#go{width:100%;background:var(--main);color:#fff;font-size:19px;font-weight:700;padding:14px}
+#go:disabled{opacity:.45;cursor:default}
+#sheet{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;padding:20px;z-index:5}
+#sheet.show{display:flex}
+#sheet>div{background:var(--card);border-radius:var(--r);padding:20px;width:100%;max-width:340px;text-align:center;max-height:80vh;overflow:auto}
+#stamp{font-size:64px;animation:pop .5s cubic-bezier(.2,1.8,.4,1)}
+@keyframes pop{from{transform:scale(.2) rotate(-30deg)}to{transform:none}}
+.plain{background:var(--soft);padding:10px 18px;margin:6px 3px}
+.hide{display:none!important}
+</style>
+</head>
+<body data-theme="cat">
+<main>
+  <header>
+    <div id="mascot"></div>
+    <div><h1>喵一下行事曆</h1><p id="greet"></p></div>
+    <div class="themes">
+      <button data-t="cat" title="貓咪">🐱</button>
+      <button data-t="sprout" title="小苗">🌱</button>
+      <button data-t="book" title="文青">📖</button>
+    </div>
+  </header>
+
+  <p id="demo" class="hide">試用模式：記錄只留在這支裝置，不會寫進行事曆</p>
+
+  <section>
+    <div class="month">
+      <button id="prev" aria-label="上個月">‹</button><b id="monthName"></b><button id="next" aria-label="下個月">›</button>
+    </div>
+    <div class="grid" id="cal"></div>
+    <p id="holiday"></p>
+  </section>
+
+  <section>
+    <h2>什麼時候？</h2>
+    <div class="row"><select id="from" aria-label="開始時間"><option value="">開始</option></select> 到 <select id="to" aria-label="結束時間"><option value="">結束</option></select></div>
+    <div class="chips" id="times"></div>
+    <button class="mini hide" id="tidy"></button>
+  </section>
+
+  <section>
+    <h2>做什麼？（可以不選）</h2>
+    <div class="chips" id="kinds"></div>
+    <div class="row"><input id="note" maxlength="40" placeholder="想補一句（例：和大學同學吃飯）"></div>
+  </section>
+
+  <section>
+    <h2 id="listTitle">已經記下的</h2>
+    <ul id="list"></ul>
+  </section>
+</main>
+
+<footer><div><div id="summary"></div><button id="go" disabled>先點日期和時間</button></div></footer>
+<div id="sheet"><div id="sheetBody"></div></div>
+
+<script>
+(function(){
+// Three ways to run:
+//  1. served by Apps Script: Code.gs fills in KEY and google.script.run is available
+//  2. static host (GitHub Pages): the link carries #s=<deployment id>&k=<key>
+//  3. opened as a local file: preview only
+// Nothing secret is stored in this file.
+var KEY = '__ACCESS_KEY__';
+var GAS = !!(window.google && google.script && google.script.run);
+var HOSTED = /\.github\.io$/.test(location.hostname);
+var API = '';
+function useLink(text){
+  var q = new URLSearchParams(String(text).split('#')[1] || '');
+  var s = q.get('s') || '', k = q.get('k') || '';
+  if(!/^[\w-]{20,}$/.test(s) || !/^[0-9a-f]{32}$/.test(k)) return false;
+  KEY = k; API = 'https:' + '//script.google.com/macros/s/' + s + '/exec';
+  try{ localStorage.setItem('wcal.link', '#s=' + s + '&k=' + k); }catch(e){}
+  return true;
+}
+if(!GAS && !useLink(location.href)){
+  try{ useLink(localStorage.getItem('wcal.link') || ''); }catch(e){}
+}
+var BACKEND = GAS || !!API;
+
+// Taiwan government calendar: weekday holidays only (weekends are marked automatically).
+var HOLIDAYS = {
+  '2026-12-25':'行憲紀念日',
+  '2027-01-01':'元旦','2027-02-04':'小年夜','2027-02-05':'除夕','2027-02-08':'春節','2027-02-09':'春節補假','2027-02-10':'春節補假',
+  '2027-03-01':'和平紀念日補假','2027-04-05':'清明節','2027-04-06':'兒童節補假','2027-04-30':'勞動節補假',
+  '2027-06-09':'端午節','2027-09-15':'中秋節','2027-09-28':'教師節','2027-10-11':'國慶日補假','2027-10-25':'光復節',
+  '2027-12-24':'行憲紀念日補假','2027-12-31':'元旦補假'
+};
+var KINDS = ['🧘 瑜伽','💆 做臉','💇 頭髮','👁️ 睫毛','🍜 聚餐'];
+var MAX_TIMES = 6;
+var THEMES = {
+  cat:{stamp:'🐾',unit:'個腳印',hello:['喵～這週有約嗎？','點兩下就好，剩下交給本喵','記下來，才不會撞期喵']},
+  sprout:{stamp:'🌱',unit:'株小苗',hello:['小苗們等你分配任務！','種下一個約會吧','今天要出門玩嗎？']},
+  book:{stamp:'🌼',unit:'朵小花',hello:['把週末，寫進日子裡。','留一段時間給自己。','慢慢生活，好好赴約。']}
+};
+var MASCOTS = {
+  cat:'<svg viewBox="0 0 64 64"><path d="M10 30 12 6 28 18zM54 30 52 6 36 18z" fill="#f2a46a"/><circle cx="32" cy="36" r="24" fill="#f7b77e"/><circle cx="23" cy="33" r="3" fill="#5a4036"/><circle cx="41" cy="33" r="3" fill="#5a4036"/><path d="M29 40h6l-3 3zM26 46q3 4 6 0q3 4 6 0M4 38l12 2M4 47l12-3M60 38l-12 2M60 47l-12-3" fill="none" stroke="#5a4036" stroke-width="2" stroke-linecap="round"/></svg>',
+  sprout:'<svg viewBox="0 0 64 64"><path d="M32 24V12" stroke="#5c8f3a" stroke-width="3"/><path d="M32 13C22 0 12 8 14 12c4 6 14 5 18 1zM32 13C42 0 52 8 50 12c-4 6-14 5-18 1z" fill="#7fbf4f"/><ellipse cx="32" cy="42" rx="17" ry="20" fill="#ffd76a"/><circle cx="26" cy="38" r="3" fill="#3b4a2f"/><circle cx="39" cy="38" r="3" fill="#3b4a2f"/><path d="M27 48q5 5 10 0" fill="none" stroke="#3b4a2f" stroke-width="2" stroke-linecap="round"/></svg>',
+  book:'<svg viewBox="0 0 64 64" fill="none" stroke="#7d6652" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 26h30v16a14 14 0 0 1-14 14h-2a14 14 0 0 1-14-14zM44 30h4a7 7 0 0 1 0 14h-5M22 18c-4-4 4-6 0-11M34 18c-4-4 4-6 0-11"/></svg>'
+};
+var WEEK = ['日','一','二','三','四','五','六'];
+
+var $ = function(id){ return document.getElementById(id); };
+var store = {
+  get:function(k,d){ try{ var v = localStorage.getItem('wcal.'+k); return v === null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set:function(k,v){ try{ localStorage.setItem('wcal.'+k, JSON.stringify(v)); }catch(e){} }
+};
+function pad(n){ return (n<10?'0':'')+n; }
+function iso(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+function parse(s){ var p = s.split('-'); return new Date(+p[0], p[1]-1, +p[2]); }
+function nice(s){ var d = parse(s); return (d.getMonth()+1)+'/'+d.getDate()+'('+WEEK[d.getDay()]+')'; }
+function el(tag,text,cls){ var e = document.createElement(tag); if(text!==undefined) e.textContent = text; if(cls) e.className = cls; return e; }
+
+var today = iso(new Date());
+var view = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+var picked = [], saved = BACKEND ? [] : store.get('times', []), tidying = false, kind = '', events = BACKEND ? [] : store.get('events', []), theme = store.get('theme','cat'), busy = false;
+
+function setTheme(t){
+  if(!THEMES[t]) t = 'cat';
+  theme = t; store.set('theme',t); document.body.dataset.theme = t;
+  $('mascot').innerHTML = MASCOTS[t];
+  var h = THEMES[t].hello; $('greet').textContent = h[Math.floor(Math.random()*h.length)];
+  document.querySelectorAll('.themes button').forEach(function(b){ b.classList.toggle('on', b.dataset.t===t); });
+  renderCal(); renderList();
+}
+
+function renderCal(){
+  var y = view.getFullYear(), m = view.getMonth();
+  $('monthName').textContent = y+' 年 '+(m+1)+' 月';
+  var cal = $('cal'); cal.textContent = '';
+  WEEK.forEach(function(w){ cal.appendChild(el('span',w)); });
+  for(var i=0;i<new Date(y,m,1).getDay();i++) cal.appendChild(el('span',''));
+  var names = [], last = new Date(y,m+1,0).getDate();
+  for(var d=1; d<=last; d++){
+    var date = new Date(y,m,d), key = iso(date), b = el('button', String(d), 'day');
+    b.dataset.date = key;
+    if(date.getDay()===0 || date.getDay()===6 || HOLIDAYS[key]) b.classList.add('off');
+    if(HOLIDAYS[key]) names.push((m+1)+'/'+d+' '+HOLIDAYS[key]);
+    if(key===today) b.classList.add('today');
+    if(picked.indexOf(key)>=0) b.classList.add('sel');
+    if(key<today) b.disabled = true;
+    if(events.some(function(ev){ return ev.date===key; })) b.appendChild(el('i', THEMES[theme].stamp));
+    b.onclick = function(){
+      var k = this.dataset.date, at = picked.indexOf(k);
+      if(at>=0) picked.splice(at,1); else picked.push(k);
+      picked.sort(); renderCal(); renderSummary();
+    };
+    cal.appendChild(b);
+  }
+  $('holiday').textContent = names.join('、');
+  $('prev').disabled = iso(new Date(y,m,0)) < today;
+}
+
+function chip(box, label, sub, onclick){
+  var b = el('button', label); if(sub) b.appendChild(el('small',sub));
+  b.onclick = function(){ onclick(b); renderSummary(); };
+  $(box).appendChild(b);
+}
+function only(box, btn){ $(box).querySelectorAll('button').forEach(function(x){ x.classList.toggle('on', x===btn); }); }
+
+// Own option list (06:00-23:45, every 15 min) so desktop and phone show the same choices.
+['from','to'].forEach(function(id){
+  [['上午',6,12],['下午',12,18],['晚上',18,24]].forEach(function(part){
+    var group = document.createElement('optgroup'); group.label = part[0];
+    for(var m=part[1]*60; m<part[2]*60; m+=15){
+      var v = pad(Math.floor(m/60))+':'+pad(m%60), o = el('option', v); o.value = v; group.appendChild(o);
+    }
+    $(id).appendChild(group);
+  });
+});
+// A saved time outside the list is added so that tapping its chip still works.
+function setTime(id, v){
+  var box = $(id); box.value = v;
+  if(box.value!==v){ var o = el('option', v); o.value = v; box.appendChild(o); box.value = v; }
+}
+
+// Saved time ranges, most used first: [{start, end, count}]
+function renderTimes(){
+  var box = $('times'); box.textContent = '';
+  if(!saved.length) tidying = false;
+  saved.forEach(function(x){
+    var b = el('button', (tidying ? '✕ ' : '') + x.start+'–'+x.end);
+    if(tidying) b.className = 'del';
+    else if($('from').value===x.start && $('to').value===x.end) b.className = 'on';
+    b.onclick = function(){
+      if(tidying){ saved.splice(saved.indexOf(x),1); saveTimes(); }
+      else { setTime('from', x.start); setTime('to', x.end); }
+      renderTimes(); renderSummary();
+    };
+    box.appendChild(b);
+  });
+  $('tidy').classList.toggle('hide', !saved.length);
+  $('tidy').textContent = tidying ? '整理好了' : '刪除常用時間';
+}
+function saveTimes(){
+  if(BACKEND) call('saveTimes', [saved], function(){});
+  else store.set('times', saved);
+}
+function remember(t){
+  var hit = saved.filter(function(x){ return x.start===t.start && x.end===t.end; })[0];
+  if(hit){ saved.splice(saved.indexOf(hit),1); hit.count++; }
+  else { hit = {start:t.start, end:t.end, count:1}; saved = saved.slice(0, MAX_TIMES-1); }
+  var at = 0; while(at<saved.length && saved[at].count>hit.count) at++;
+  saved.splice(at, 0, hit);
+  saveTimes();
+}
+
+KINDS.forEach(function(k){
+  chip('kinds', k, '', function(b){
+    kind = kind===k ? '' : k; only('kinds', kind ? b : null);
+  });
+});
+
+function times(){
+  var s = $('from').value, e = $('to').value;
+  return s && e && s<e ? {start:s, end:e} : null;
+}
+function timeText(t){ return t.allDay ? '整天' : t.start+'–'+t.end; }
+function title(){
+  var note = $('note').value.trim();
+  return '🙋‍♀️ ' + (kind ? kind.split(' ')[1] : '有活動') + (note ? '｜'+note : '');
+}
+function renderSummary(){
+  var t = times(), go = $('go');
+  var parts = [];
+  if(picked.length) parts.push(picked.map(nice).join('、'));
+  if(t) parts.push(timeText(t));
+  if(kind) parts.push(kind);
+  $('summary').textContent = $('from').value && $('to').value && !t ? '結束時間要晚於開始時間' : parts.join(' · ');
+  go.disabled = busy || !(picked.length && t);
+  go.textContent = busy ? '傳送中…' : !picked.length ? (t ? '再點一下日期' : '先點日期和時間') : !t ? '再選時間' : '記下來！' + THEMES[theme].stamp;
+}
+
+function renderList(){
+  var ul = $('list'); ul.textContent = '';
+  var up = events.filter(function(e){ return e.date>=today; }).sort(function(a,b){ return (a.date+a.start).localeCompare(b.date+b.start); });
+  var month = events.filter(function(e){ return e.date.slice(0,7)===today.slice(0,7); }).length;
+  $('listTitle').textContent = '已經記下的' + (month ? '｜本月收集 '+month+' '+THEMES[theme].unit : '');
+  if(!up.length){ ul.appendChild(el('li','目前沒有，週末很自由～')); return; }
+  up.slice(0,8).forEach(function(ev){
+    var li = el('li');
+    li.appendChild(el('span', nice(ev.date)+' '+timeText(ev)+' '+ev.title));
+    var x = el('button','取消');
+    x.onclick = function(){ remove(ev); };
+    li.appendChild(x); ul.appendChild(li);
+  });
+}
+function refresh(){ renderCal(); renderList(); renderSummary(); }
+
+function sheet(nodes){
+  var body = $('sheetBody'); body.textContent = '';
+  nodes.forEach(function(n){ body.appendChild(n); });
+  $('sheet').classList.add('show');
+}
+function closeSheet(){ $('sheet').classList.remove('show'); }
+function btn(text, fn){ var b = el('button', text, 'plain'); b.onclick = fn; return b; }
+function stamp(){ var s = el('div', THEMES[theme].stamp); s.id = 'stamp'; return s; }
+
+function reset(){
+  picked = []; kind = ''; tidying = false; $('note').value = ''; $('from').value = ''; $('to').value = '';
+  only('kinds', null);
+  renderTimes(); refresh();
+}
+
+function failed(err){
+  busy = false; renderSummary();
+  sheet([el('h3','沒有成功 😿'), el('p', String(err && err.message || err)), btn('知道了', closeSheet)]);
+}
+function call(name, args, ok){
+  if(GAS){
+    var run = google.script.run.withSuccessHandler(ok).withFailureHandler(failed);
+    run[name].apply(run, [KEY].concat(args));
+    return;
+  }
+  // A plain-text POST needs no CORS preflight, which Apps Script cannot answer.
+  fetch(API, {method:'POST', body:JSON.stringify({k:KEY, fn:name, args:args})})
+    .then(function(r){ return r.json(); })
+    .then(function(j){ if(!j.ok) throw new Error(j.error); ok(j.result); })
+    .catch(failed);
+}
+// Hosted page opened without its link: let the user paste it once.
+function askLink(){
+  var box = el('input'); box.placeholder = '貼上完整連結'; box.style.width = '100%';
+  var hint = el('p', '把收到的完整連結貼在下面，只要做一次。');
+  sheet([el('h3','還沒連上行事曆'), hint, box, btn('連接', function(){
+    if(useLink(box.value.trim())) location.reload(); else hint.textContent = '這個連結不完整，請整段複製再貼一次。';
+  })]);
+}
+
+function remove(ev){
+  var gone = function(){ events = events.filter(function(x){ return x!==ev; }); if(!BACKEND) store.set('events',events); refresh(); };
+  if(BACKEND){
+    if(confirm('取消 '+nice(ev.date)+' 的活動？行事曆上也會刪掉。')) call('deleteEvent', [ev.id], gone);
+  } else if(confirm('取消 '+nice(ev.date)+' 的活動？')) gone();
+}
+
+$('go').onclick = function(){
+  var t = times(); if(busy || !t || !picked.length) return;
+  var items = picked.map(function(d){ return {date:d, start:t.start, end:t.end, title:title()}; });
+  if(BACKEND){
+    busy = true; renderSummary();
+    call('createEvents', [items], function(res){
+      busy = false;
+      events = res.events; remember(t); reset();
+      var nodes = [stamp(), el('h3','記好了！'), el('p', items.map(function(i){ return nice(i.date); }).join('、')+' 已經在行事曆上')];
+      if(res.createdIds.length) nodes.push(btn('點錯了，復原', function(){
+        closeSheet();
+        res.createdIds.forEach(function(id){
+          call('deleteEvent', [id], function(){ events = events.filter(function(x){ return x.id!==id; }); refresh(); });
+        });
+      }));
+      nodes.push(btn('好', closeSheet));
+      sheet(nodes);
+    });
+    return;
+  }
+  // Preview mode (opened as a local file): nothing leaves this device.
+  events = events.concat(items); store.set('events', events); remember(t); reset();
+  sheet([stamp(), el('h3','試用：記好了'), el('p','這是試用模式，沒有寫進行事曆'), btn('好', closeSheet)]);
+};
+
+$('prev').onclick = function(){ view.setMonth(view.getMonth()-1); renderCal(); };
+$('next').onclick = function(){ view.setMonth(view.getMonth()+1); renderCal(); };
+['from','to','note'].forEach(function(id){ $(id).addEventListener('input', function(){ renderTimes(); renderSummary(); }); });
+$('tidy').onclick = function(){ tidying = !tidying; renderTimes(); };
+document.querySelectorAll('.themes button').forEach(function(b){ b.onclick = function(){ setTheme(b.dataset.t); renderSummary(); }; });
+
+if(!BACKEND){ if(HOSTED) askLink(); else $('demo').classList.remove('hide'); }
+setTheme(theme); renderTimes(); renderSummary();
+if(BACKEND){
+  call('listEvents', [], function(list){ events = list; refresh(); });
+  call('getTimes', [], function(list){ saved = list; renderTimes(); });
+}
+})();
+</script>
+</body>
+</html>
